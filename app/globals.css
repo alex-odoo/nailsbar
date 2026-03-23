@@ -1,0 +1,55 @@
+@import "tailwindcss";
+@source "../app/**/*.{tsx,ts,jsx,js}";
+@source "../components/**/*.{tsx,ts,jsx,js}";
+
+/* Nailsbar Odesa — Brand Design Tokens */
+@theme inline {
+  /* Brand colors from logo (cream background + navy script) */
+  --color-cream:        #FAF3E8;
+  --color-cream-dark:   #EEE4D4;
+  --color-navy:         #1C2B4A;
+  --color-navy-soft:    #2D4070;
+  --color-navy-muted:   #7A8FA6;
+  --color-surface:      #FFFFFF;
+  --color-error:        #C94040;
+  --color-success:      #4A9A6A;
+
+  /* Semantic aliases */
+  --color-background:   var(--color-cream);
+  --color-foreground:   var(--color-navy);
+  --color-border:       var(--color-cream-dark);
+  --color-muted:        var(--color-navy-muted);
+
+  /* Typography */
+  --font-display: 'Cormorant Garamond', 'Playfair Display', Georgia, serif;
+  --font-sans:    'DM Sans', 'Inter', system-ui, sans-serif;
+
+  /* Border radius */
+  --radius-sm:  6px;
+  --radius-md:  12px;
+  --radius-lg:  20px;
+  --radius-xl:  32px;
+
+  /* Spacing scale additions */
+  --spacing-safe-bottom: env(safe-area-inset-bottom, 16px);
+}
+
+/* Base */
+* {
+  -webkit-tap-highlight-color: transparent;
+}
+
+body {
+  background: var(--color-cream);
+  color: var(--color-navy);
+  font-family: var(--font-sans);
+  -webkit-font-smoothing: antialiased;
+}
+
+/* PWA safe area support */
+.pb-safe {
+  padding-bottom: max(16px, env(safe-area-inset-bottom));
+}
+.pt-safe {
+  padding-top: env(safe-area-inset-top, 0px);
+}

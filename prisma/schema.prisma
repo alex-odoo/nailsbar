@@ -1,0 +1,124 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+// LOCAL DEV: sqlite | PRODUCTION: змінити на postgresql
+datasource db {
+  provider = "sqlite"
+  url      = env("DATABASE_URL")
+}
+
+// ─── Enums (SQLite не підтримує enum → String) ───────────
+
+// Role: "MASTER" | "ADMIN"
+// AppointmentStatus: "PENDING" | "CONFIRMED" | "ARRIVED" | "DONE" | "CANCELLED" | "NO_SHOW"
+// ReminderStatus: "PENDING" | "SENT" | "FAILED"
+
+// ─── Models ──────────────────────────────────────────────
+
+model Staff {
+  id                    String        @id @default(cuid())
+  name                  String
+  role                  String        @default("MASTER")
+  pinHash               String
+  phone                 String?       @unique
+  avatar                String?
+  isActive              Boolean       @default(true)
+  canCreateAppointments Boolean       @default(true)
+  canSeeClientLastName  Boolean       @default(true)
+  canSeeClientPhone     Boolean       @default(true)
+  schedule              Schedule[]
+  appointments          Appointment[]
+  pushSubs              PushSubscription[]
+  createdAt             DateTime      @default(now())
+  updatedAt             DateTime      @updatedAt
+}
+
+model Service {
+  id           String        @id @default(cuid())
+  name         String
+  category     String
+  duration     Int
+  price        Int
+  description  String?
+  image        String?
+  isActive     Boolean       @default(true)
+  sortOrder    Int           @default(0)
+  appointments Appointment[]
+  createdAt    DateTime      @default(now())
+  updatedAt    DateTime      @updatedAt
+}
+
+model Schedule {
+  id         String   @id @default(cuid())
+  staffId    String
+  staff      Staff    @relation(fields: [staffId], references: [id], onDelete: Cascade)
+  date       DateTime
+  startTime  String
+  endTime    String
+  isWorking  Boolean  @default(true)
+  breaks     String?  // JSON string: "[{\"from\":\"13:00\",\"to\":\"14:00\"}]"
+
+  @@unique([staffId, date])
+  @@index([date])
+}
+
+model Client {
+  id             String        @id @default(cuid())
+  firstName      String
+  lastName       String?
+  phone          String        @unique
+  notes          String?
+  telegramChatId String?
+  appointments   Appointment[]
+  createdAt      DateTime      @default(now())
+  updatedAt      DateTime      @updatedAt
+
+  @@index([phone])
+}
+
+model Appointment {
+  id        String      @id @default(cuid())
+  clientId  String
+  client    Client      @relation(fields: [clientId], references: [id])
+  staffId   String
+  staff     Staff       @relation(fields: [staffId], references: [id])
+  serviceId String
+  service   Service     @relation(fields: [serviceId], references: [id])
+  date      DateTime
+  startTime String
+  endTime   String
+  status    String      @default("PENDING")
+  notes     String?
+  reminders Reminder[]
+  createdAt DateTime    @default(now())
+  updatedAt DateTime    @updatedAt
+
+  @@index([date, staffId])
+  @@index([clientId])
+}
+
+model Reminder {
+  id            String      @id @default(cuid())
+  appointmentId String
+  appointment   Appointment @relation(fields: [appointmentId], references: [id], onDelete: Cascade)
+  type          String
+  scheduledAt   DateTime
+  sentAt        DateTime?
+  status        String      @default("PENDING")
+  error         String?
+
+  @@index([scheduledAt, status])
+}
+
+model PushSubscription {
+  id        String   @id @default(cuid())
+  staffId   String
+  staff     Staff    @relation(fields: [staffId], references: [id], onDelete: Cascade)
+  endpoint  String   @unique
+  p256dh    String
+  auth      String
+  createdAt DateTime @default(now())
+
+  @@index([staffId])
+}
