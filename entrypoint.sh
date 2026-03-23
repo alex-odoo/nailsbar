@@ -1,8 +1,10 @@
 #!/bin/sh
 set -e
 
+PRISMA="node node_modules/prisma/build/index.js"
+
 echo "Running database migrations..."
-npx prisma db push --skip-generate
+$PRISMA db push --skip-generate
 
 # Seed only if DB is empty (no staff records)
 STAFF_COUNT=$(node -e "
@@ -13,7 +15,7 @@ p.staff.count().then(n => { console.log(n); p.\$disconnect(); });
 
 if [ "$STAFF_COUNT" = "0" ]; then
   echo "Seeding database..."
-  npx prisma db seed
+  node prisma/seed.js
 fi
 
 echo "Starting server..."

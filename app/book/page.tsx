@@ -1,6 +1,8 @@
 import { prisma } from '@/lib/prisma'
 import BookingWizard from '@/components/booking/BookingWizard'
 
+export const dynamic = 'force-dynamic'
+
 export const metadata = {
   title: 'Запис онлайн — Nailsbar Odesa',
   description: 'Запишіться на манікюр та педикюр онлайн. Nailsbar Odesa — професійний догляд за нігтями в Одесі.',
