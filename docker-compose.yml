@@ -3,35 +3,18 @@ services:
     build: .
     restart: unless-stopped
     ports:
-      - "3000:3000"
+      - "3001:3000"
     environment:
-      DATABASE_URL: postgresql://nailsbar:${POSTGRES_PASSWORD}@db:5432/nailsbar
+      DATABASE_URL: file:/data/nailsbar.db
       SESSION_SECRET: ${SESSION_SECRET}
       TELEGRAM_BOT_TOKEN: ${TELEGRAM_BOT_TOKEN}
       TELEGRAM_ADMIN_CHAT_ID: ${TELEGRAM_ADMIN_CHAT_ID}
-      VAPID_PUBLIC_KEY: ${VAPID_PUBLIC_KEY}
-      VAPID_PRIVATE_KEY: ${VAPID_PRIVATE_KEY}
-      VAPID_EMAIL: ${VAPID_EMAIL}
       NEXT_PUBLIC_APP_URL: ${NEXT_PUBLIC_APP_URL}
       NODE_ENV: production
-    depends_on:
-      db:
-        condition: service_healthy
-
-  db:
-    image: postgres:16-alpine
-    restart: unless-stopped
-    environment:
-      POSTGRES_DB: nailsbar
-      POSTGRES_USER: nailsbar
-      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
+      ADMIN_PIN: ${ADMIN_PIN}
+      MASTER_PIN: ${MASTER_PIN}
     volumes:
-      - postgres_data:/var/lib/postgresql/data
-    healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U nailsbar"]
-      interval: 10s
-      timeout: 5s
-      retries: 5
+      - sqlite_data:/data
 
 volumes:
-  postgres_data:
+  sqlite_data:
