@@ -213,11 +213,12 @@ export default function LoyaltyPage() {
         <Image
           src="/loyalty-logo.jpg"
           alt="Nailsbar Odesa"
-          width={400}
-          height={400}
+          width={768}
+          height={215}
           priority
           className="welcome-logo"
         />
+        <div className="est-line">EST. 2021</div>
         <div className="welcome-box">
           <h2>Картка лояльності</h2>
           <p>
@@ -269,12 +270,12 @@ export default function LoyaltyPage() {
         <Image
           src="/loyalty-logo.jpg"
           alt="Nailsbar Odesa"
-          width={400}
-          height={400}
+          width={768}
+          height={215}
           priority
           className="welcome-logo"
         />
-        <div className="brand-sub" style={{ marginTop: -12 }}>Завантаження...</div>
+        <div className="brand-sub">Завантаження...</div>
       </div>
 
       {/* CARD */}

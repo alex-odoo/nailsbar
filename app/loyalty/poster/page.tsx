@@ -1,11 +1,12 @@
 'use client'
 
 import { useEffect, useState } from 'react'
+import Image from 'next/image'
 import { QRCodeSVG } from 'qrcode.react'
 
 // Standalone page for printing a salon-wide QR. Open at /loyalty/poster
 // and print to A5/A4 from the browser. The QR points to the public
-// loyalty page where clients enter their name + phone.
+// loyalty page where clients enter their phone.
 export default function PosterPage() {
   const [url, setUrl] = useState('')
   useEffect(() => {
@@ -14,7 +15,14 @@ export default function PosterPage() {
 
   return (
     <div className="poster-page">
-      <div className="poster-title">Nailsbar</div>
+      <Image
+        src="/loyalty-logo.jpg"
+        alt="Nailsbar Odesa"
+        width={768}
+        height={215}
+        priority
+        className="poster-logo"
+      />
       <div className="poster-sub">Картка лояльності</div>
       <div className="poster-qr">
         {url && <QRCodeSVG value={url} size={320} level="H" />}

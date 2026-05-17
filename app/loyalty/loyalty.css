@@ -36,15 +36,24 @@
 }
 
 /* WELCOME logo (replaces .brand/.brand-sub text on welcome+loading screens).
-   The image has a burgundy background that matches the page (#3d0510-ish),
-   so the JPG bleeds into the page without a visible square edge. If a
-   mismatch becomes visible, try `mix-blend-mode: multiply` here. */
+   Asset is the burgundy logo (NAILSBAR + Odesa) cropped tight and repainted
+   with the page bg so it bleeds in without a visible square edge.
+   EST. 2021 sits below as HTML text so we can size and space it freely. */
 .loyalty-root .welcome-logo {
-  width: 88%;
-  max-width: 320px;
+  width: 92%;
+  max-width: 360px;
   height: auto;
   display: block;
-  margin: -8px auto 14px;
+  margin: 0 auto;
+}
+.loyalty-root .est-line {
+  font-size: 1.45rem;
+  font-weight: 700;
+  letter-spacing: 0.28em;
+  color: var(--cream);
+  text-align: center;
+  margin: 6px 0 18px;
+  padding-left: 0.28em; /* compensate for last-letter spacing on visual center */
 }
 
 /* WELCOME */
@@ -521,6 +530,13 @@
   font-family: var(--font-great-vibes), 'Great Vibes', cursive;
   font-size: 4rem;
   color: var(--cream);
+}
+.loyalty-root .poster-logo {
+  width: 100%;
+  max-width: 440px;
+  height: auto;
+  display: block;
+  margin: 0 auto;
 }
 .loyalty-root .poster-sub {
   font-size: 0.9rem;
