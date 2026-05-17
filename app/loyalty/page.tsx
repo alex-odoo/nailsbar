@@ -1,6 +1,7 @@
 'use client'
 
 import { useCallback, useEffect, useState } from 'react'
+import Image from 'next/image'
 import { QRCodeSVG } from 'qrcode.react'
 
 const TOTAL = 9
@@ -209,8 +210,14 @@ export default function LoyaltyPage() {
     <>
       {/* WELCOME */}
       <div className={`screen ${screen === 'welcome' ? 'active' : ''}`}>
-        <div className="brand">Nailsbar</div>
-        <div className="brand-sub">Odesa · Est. 2021</div>
+        <Image
+          src="/loyalty-logo.jpg"
+          alt="Nailsbar Odesa"
+          width={400}
+          height={400}
+          priority
+          className="welcome-logo"
+        />
         <div className="welcome-box">
           <h2>Картка лояльності</h2>
           <p>
@@ -259,8 +266,15 @@ export default function LoyaltyPage() {
 
       {/* LOADING */}
       <div className={`screen ${screen === 'loading' ? 'active' : ''}`}>
-        <div className="brand">Nailsbar</div>
-        <div className="brand-sub">Завантаження...</div>
+        <Image
+          src="/loyalty-logo.jpg"
+          alt="Nailsbar Odesa"
+          width={400}
+          height={400}
+          priority
+          className="welcome-logo"
+        />
+        <div className="brand-sub" style={{ marginTop: -12 }}>Завантаження...</div>
       </div>
 
       {/* CARD */}
