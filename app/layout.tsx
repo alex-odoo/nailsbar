@@ -19,6 +19,14 @@ export const metadata: Metadata = {
   title: 'Nailsbar Odesa',
   description: 'Манікюр та педикюр в Одесі. Запис онлайн.',
   manifest: '/manifest.json',
+  icons: {
+    icon: [
+      { url: '/favicon.ico', sizes: 'any' },
+      { url: '/icon-32.png', sizes: '32x32', type: 'image/png' },
+      { url: '/icon-192.png', sizes: '192x192', type: 'image/png' },
+    ],
+    apple: '/apple-icon.png',
+  },
   appleWebApp: {
     capable: true,
     statusBarStyle: 'default',
@@ -37,9 +45,6 @@ export const viewport: Viewport = {
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
     <html lang="uk" className={`${dmSans.variable} ${cormorant.variable} h-full`}>
-      <head>
-        <link rel="apple-touch-icon" href="/icon-192.png" />
-      </head>
       <body className="min-h-full bg-cream text-navy antialiased">{children}</body>
     </html>
   )
