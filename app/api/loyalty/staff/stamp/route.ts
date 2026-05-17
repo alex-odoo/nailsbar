@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { requireAuth } from '@/lib/auth'
-import { awardStamp } from '@/lib/loyalty'
+import { awardStamp, getLoyaltyState } from '@/lib/loyalty'
 
 // POST /api/loyalty/staff/stamp { clientId }
 // Authenticated staff only. PIN-free shortcut used by /staff/loyalty so
@@ -18,7 +18,10 @@ export async function POST(req: NextRequest) {
       staffId: session.id,
       source: 'manual',
     })
-    return NextResponse.json(result)
+    // Refresh state with history so the staff UI can show the new stamp
+    // in the recent list immediately, without a second round-trip.
+    const stateWithHistory = await getLoyaltyState(clientId, { includeHistory: true })
+    return NextResponse.json({ ...result, state: stateWithHistory ?? result.state })
   } catch (e) {
     if (e instanceof Error && e.message === 'Unauthorized') {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })

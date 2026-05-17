@@ -4,6 +4,6 @@ import LoyaltyStaffView from '@/components/staff/LoyaltyStaffView'
 export const dynamic = 'force-dynamic'
 
 export default async function StaffLoyaltyPage() {
-  await requireAuth()
-  return <LoyaltyStaffView />
+  const session = await requireAuth()
+  return <LoyaltyStaffView isAdmin={session.role === 'ADMIN'} />
 }

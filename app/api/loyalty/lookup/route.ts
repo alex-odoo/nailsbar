@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { prisma } from '@/lib/prisma'
 import { getLoyaltyState, normalizePhone } from '@/lib/loyalty'
+import { notifyNewLoyaltyClient } from '@/lib/telegram'
 
 // POST /api/loyalty/lookup
 // Body modes:
@@ -11,9 +12,10 @@ import { getLoyaltyState, normalizePhone } from '@/lib/loyalty'
 export async function POST(req: NextRequest) {
   try {
     const body = await req.json().catch(() => ({}))
+    const includeHistory = body?.history === true
 
     if (typeof body.clientId === 'string' && body.clientId.length > 0) {
-      const state = await getLoyaltyState(body.clientId)
+      const state = await getLoyaltyState(body.clientId, { includeHistory })
       if (!state) return NextResponse.json({ error: 'Client not found' }, { status: 404 })
       return NextResponse.json(state)
     }
@@ -39,17 +41,26 @@ export async function POST(req: NextRequest) {
       if (!existing) {
         return NextResponse.json({ error: 'not_found' }, { status: 404 })
       }
-      const state = await getLoyaltyState(existing.id)
+      const state = await getLoyaltyState(existing.id, { includeHistory })
       return NextResponse.json(state)
     }
 
+    // Detect first-time signup so we can ping Telegram only on creation.
+    const existing = await prisma.client.findUnique({
+      where: { phone },
+      select: { id: true },
+    })
     const client = await prisma.client.upsert({
       where: { phone },
       update: { firstName: firstNameRaw },
       create: { firstName: firstNameRaw, phone },
       select: { id: true },
     })
-    const state = await getLoyaltyState(client.id)
+    if (!existing) {
+      // Fire-and-forget: do not block the response on Telegram latency
+      void notifyNewLoyaltyClient({ name: firstNameRaw, phone })
+    }
+    const state = await getLoyaltyState(client.id, { includeHistory })
     return NextResponse.json(state)
   } catch (e) {
     console.error('loyalty/lookup', e)

@@ -64,6 +64,33 @@ export async function sendClientReminder(
   await sendMessage(chatId, text)
 }
 
+/** Адмін-нотифікація про нову реєстрацію на програму лояльності */
+export async function notifyNewLoyaltyClient(data: {
+  name: string
+  phone: string
+}): Promise<void> {
+  if (!ADMIN_CHAT_ID) return
+  const when = new Date().toLocaleString('uk-UA', {
+    timeZone: 'Europe/Kyiv',
+    day: 'numeric',
+    month: 'long',
+    hour: '2-digit',
+    minute: '2-digit',
+  })
+  const text = `
+💅 <b>Нова реєстрація на програму лояльності</b>
+
+👤 ${data.name}
+📱 ${data.phone}
+🕐 ${when}
+`.trim()
+  try {
+    await sendMessage(ADMIN_CHAT_ID, text)
+  } catch (e) {
+    console.error('notifyNewLoyaltyClient failed', e)
+  }
+}
+
 /** SMS-подібне підтвердження при бронюванні (якщо клієнт дав Telegram) */
 export async function sendBookingConfirmation(
   chatId: string,

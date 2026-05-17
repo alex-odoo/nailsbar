@@ -2,6 +2,13 @@
 
 import { useCallback, useState } from 'react'
 
+type StampRecord = {
+  id: string
+  createdAt: string
+  source: string
+  staffName: string | null
+}
+
 type LoyaltyState = {
   clientId: string
   firstName: string
@@ -10,6 +17,8 @@ type LoyaltyState = {
   stamps: number
   target: number
   canRedeem: boolean
+  todayStamps?: number
+  recentStamps?: StampRecord[]
 }
 
 type StampResult = {
@@ -20,12 +29,25 @@ type StampResult = {
 
 const TOTAL = 10
 
-export default function LoyaltyStaffView() {
+function formatStampDate(iso: string): string {
+  const d = new Date(iso)
+  const today = new Date()
+  today.setHours(0, 0, 0, 0)
+  const stampDay = new Date(d)
+  stampDay.setHours(0, 0, 0, 0)
+  const dayDiff = Math.round((today.getTime() - stampDay.getTime()) / 86400000)
+  const time = d.toLocaleTimeString('uk-UA', { hour: '2-digit', minute: '2-digit' })
+  if (dayDiff === 0) return `Сьогодні, ${time}`
+  if (dayDiff === 1) return `Вчора, ${time}`
+  return d.toLocaleDateString('uk-UA', { day: 'numeric', month: 'long' }) + `, ${time}`
+}
+
+export default function LoyaltyStaffView({ isAdmin }: { isAdmin: boolean }) {
   const [phone, setPhone] = useState('')
   const [state, setState] = useState<LoyaltyState | null>(null)
   const [error, setError] = useState('')
   const [info, setInfo] = useState('')
-  const [creating, setCreating] = useState(false) // phone not found, asking for name
+  const [creating, setCreating] = useState(false)
   const [firstName, setFirstName] = useState('')
   const [busy, setBusy] = useState(false)
 
@@ -51,19 +73,18 @@ export default function LoyaltyStaffView() {
       const res = await fetch('/api/loyalty/lookup', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ phone: phoneTrim }),
+        body: JSON.stringify({ phone: phoneTrim, history: true }),
       })
       if (res.status === 404) {
         setCreating(true)
-        setInfo('Клієнта немає в базі - введіть ім\'я для нової картки')
+        setInfo("Клієнта немає в базі - введіть ім'я для нової картки")
         return
       }
       if (!res.ok) {
         setError('Помилка пошуку')
         return
       }
-      const s = (await res.json()) as LoyaltyState
-      setState(s)
+      setState((await res.json()) as LoyaltyState)
     } finally {
       setBusy(false)
     }
@@ -82,14 +103,13 @@ export default function LoyaltyStaffView() {
       const res = await fetch('/api/loyalty/lookup', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ phone: phoneTrim, firstName: nameTrim }),
+        body: JSON.stringify({ phone: phoneTrim, firstName: nameTrim, history: true }),
       })
       if (!res.ok) {
         setError('Помилка створення')
         return
       }
-      const s = (await res.json()) as LoyaltyState
-      setState(s)
+      setState((await res.json()) as LoyaltyState)
       setCreating(false)
       setInfo('Картку створено')
     } finally {
@@ -120,6 +140,38 @@ export default function LoyaltyStaffView() {
         setInfo(`+1 штамп · ${data.state.stamps}/${TOTAL}`)
         setTimeout(() => setInfo(''), 2500)
       }
+    } finally {
+      setBusy(false)
+    }
+  }, [state])
+
+  const clearCycle = useCallback(async () => {
+    if (!state) return
+    const ok = window.confirm(
+      `Очистити всі штампи поточного циклу для ${state.firstName}? Дія незворотна.`,
+    )
+    if (!ok) return
+    setBusy(true)
+    setError('')
+    setInfo('')
+    try {
+      const res = await fetch('/api/loyalty/staff/reset', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ clientId: state.clientId }),
+      })
+      if (res.status === 403) {
+        setError('Тільки адмін може очистити картку')
+        return
+      }
+      if (!res.ok) {
+        setError('Не вдалося очистити')
+        return
+      }
+      const data = (await res.json()) as { state: LoyaltyState; removed: number }
+      setState(data.state)
+      setInfo(`Очищено ${data.removed} штамп(ів)`)
+      setTimeout(() => setInfo(''), 3000)
     } finally {
       setBusy(false)
     }
@@ -211,6 +263,11 @@ export default function LoyaltyStaffView() {
             <div className="flex items-baseline gap-2 mb-2">
               <span className="text-4xl font-bold text-navy">{state.stamps}</span>
               <span className="text-lg text-muted">/ {TOTAL} штампів</span>
+              {state.todayStamps !== undefined && state.todayStamps > 0 && (
+                <span className="ml-auto text-xs font-semibold px-2 py-1 rounded-full bg-success/15 text-success">
+                  Сьогодні: +{state.todayStamps}
+                </span>
+              )}
             </div>
 
             <div className="h-2 bg-cream-dark rounded-full overflow-hidden">
@@ -233,6 +290,26 @@ export default function LoyaltyStaffView() {
             )}
           </div>
 
+          {state.recentStamps && state.recentStamps.length > 0 && (
+            <div className="mb-4">
+              <p className="text-xs uppercase tracking-wide text-muted mb-2">Останні штампи</p>
+              <div className="space-y-1.5">
+                {state.recentStamps.slice(0, 8).map((s) => (
+                  <div
+                    key={s.id}
+                    className="bg-surface border border-cream-dark rounded-lg px-3 py-2 flex justify-between items-center text-sm"
+                  >
+                    <span className="text-navy">💅 {formatStampDate(s.createdAt)}</span>
+                    <span className="text-xs text-muted">
+                      {s.staffName ?? '—'}
+                      {s.source === 'auto_appointment' && ' · авто'}
+                    </span>
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
+
           {info && <p className="text-sm font-semibold text-navy mb-3">{info}</p>}
           {error && <p className="text-sm text-error mb-3">{error}</p>}
 
@@ -252,6 +329,16 @@ export default function LoyaltyStaffView() {
               {state.canRedeem ? 'Картка заповнена' : busy ? '...' : '+1 штамп'}
             </button>
           </div>
+
+          {isAdmin && state.stamps > 0 && (
+            <button
+              onClick={clearCycle}
+              disabled={busy}
+              className="mt-3 w-full text-sm text-error border border-error/30 rounded-xl py-2.5 font-medium hover:bg-error/5 disabled:opacity-50"
+            >
+              Очистити поточний цикл (admin)
+            </button>
+          )}
         </div>
       )}
     </div>

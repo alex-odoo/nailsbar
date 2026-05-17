@@ -3,6 +3,13 @@ import { prisma } from './prisma'
 
 export const CARD_SIZE = 10 // stamps needed to redeem -50%
 
+export type StampRecord = {
+  id: string
+  createdAt: Date
+  source: string
+  staffName: string | null
+}
+
 export type LoyaltyState = {
   clientId: string
   firstName: string
@@ -11,6 +18,8 @@ export type LoyaltyState = {
   stamps: number
   target: number
   canRedeem: boolean
+  todayStamps?: number      // stamps awarded today (server local time)
+  recentStamps?: StampRecord[]  // up to 20 most recent, newest first
 }
 
 export function normalizePhone(input: string): string {
@@ -20,7 +29,10 @@ export function normalizePhone(input: string): string {
     .replace(/^0/, '+380')
 }
 
-export async function getLoyaltyState(clientId: string): Promise<LoyaltyState | null> {
+export async function getLoyaltyState(
+  clientId: string,
+  opts: { includeHistory?: boolean } = {},
+): Promise<LoyaltyState | null> {
   const client = await prisma.client.findUnique({
     where: { id: clientId },
     select: { id: true, firstName: true, loyaltyCyclesRedeemed: true },
@@ -32,7 +44,7 @@ export async function getLoyaltyState(clientId: string): Promise<LoyaltyState | 
     where: { clientId: client.id, cycleNumber },
   })
 
-  return {
+  const base: LoyaltyState = {
     clientId: client.id,
     firstName: client.firstName,
     cycleNumber,
@@ -40,6 +52,39 @@ export async function getLoyaltyState(clientId: string): Promise<LoyaltyState | 
     stamps,
     target: CARD_SIZE,
     canRedeem: stamps >= CARD_SIZE,
+  }
+
+  if (!opts.includeHistory) return base
+
+  const startOfToday = new Date()
+  startOfToday.setHours(0, 0, 0, 0)
+
+  const [todayStamps, recent] = await Promise.all([
+    prisma.loyaltyStamp.count({
+      where: { clientId: client.id, createdAt: { gte: startOfToday } },
+    }),
+    prisma.loyaltyStamp.findMany({
+      where: { clientId: client.id },
+      orderBy: { createdAt: 'desc' },
+      take: 20,
+      select: {
+        id: true,
+        createdAt: true,
+        source: true,
+        staff: { select: { name: true } },
+      },
+    }),
+  ])
+
+  return {
+    ...base,
+    todayStamps,
+    recentStamps: recent.map((s) => ({
+      id: s.id,
+      createdAt: s.createdAt,
+      source: s.source,
+      staffName: s.staff?.name ?? null,
+    })),
   }
 }
 
