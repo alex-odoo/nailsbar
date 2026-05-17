@@ -3,10 +3,23 @@
 import { useCallback, useEffect, useState } from 'react'
 import Image from 'next/image'
 import { QRCodeSVG } from 'qrcode.react'
+import confetti from 'canvas-confetti'
 
 const TOTAL = 10
 const PIN_LENGTH = 6
 const STORAGE_KEY = 'nailsbar.loyalty.clientId'
+
+// Full-screen multi-burst confetti in brand pinks. Fires when the 10th
+// stamp lands. Three staggered bursts so it sweeps across the screen.
+const CONFETTI_COLORS = ['#ff6b8a', '#ff8fab', '#ff3d68', '#e8a0b0', '#f5e6e8', '#ffd6e0']
+function fireConfetti() {
+  if (typeof window === 'undefined') return
+  const base = { spread: 70, ticks: 200, gravity: 0.9, scalar: 1.1, colors: CONFETTI_COLORS }
+  confetti({ ...base, particleCount: 120, origin: { x: 0.1, y: 0.6 }, angle: 60 })
+  confetti({ ...base, particleCount: 120, origin: { x: 0.9, y: 0.6 }, angle: 120 })
+  setTimeout(() => confetti({ ...base, particleCount: 180, spread: 100, origin: { x: 0.5, y: 0.4 }, startVelocity: 50 }), 250)
+  setTimeout(() => confetti({ ...base, particleCount: 100, origin: { x: 0.5, y: 0.7 }, scalar: 1.4 }), 600)
+}
 
 type LoyaltyState = {
   clientId: string
@@ -183,6 +196,7 @@ export default function LoyaltyPage() {
         setTimeout(() => setPopping(null), 450)
       }
       if (fresh.canRedeem) {
+        fireConfetti()
         setTimeout(() => setCeleb(true), 700)
       }
     } else {
@@ -291,13 +305,16 @@ export default function LoyaltyPage() {
             )}
             <div className="grid">
               {Array.from({ length: TOTAL }).map((_, i) => {
-                // Every slot is a stamp, identical in appearance. Empty
-                // until earned, hot pink with 💅 once filled.
+                // Every slot is a stamp. Last slot carries the −50%
+                // label as a visual cue that this is the reward stamp,
+                // but it still fills like any other when earned.
                 const stamped = i < state.stamps
+                const isReward = i === TOTAL - 1
                 const isPopping = popping !== null && i === popping
                 const classes = [
                   'hslot',
                   stamped ? 'on' : '',
+                  isReward ? 'reward-slot' : '',
                   isPopping ? 'popping' : '',
                 ].filter(Boolean).join(' ')
                 return (
@@ -308,7 +325,11 @@ export default function LoyaltyPage() {
                         d="M50 85C50 85 5 52 5 28C5 14 16 5 28 5C37 5 45 11 50 18C55 11 63 5 72 5C84 5 95 14 95 28C95 52 50 85 50 85Z"
                       />
                     </svg>
-                    <div className="stamp-ico">💅</div>
+                    {isReward ? (
+                      <div className="reward-lbl">−50%</div>
+                    ) : (
+                      <div className="stamp-ico">💅</div>
+                    )}
                   </div>
                 )
               })}
