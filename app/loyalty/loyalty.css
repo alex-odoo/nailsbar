@@ -532,13 +532,14 @@
   font-size: 0.88rem;
   text-shadow: 0 1px 2px rgba(0, 0, 0, 0.35);
 }
-.loyalty-root .hslot.reward-sparkle {
+.loyalty-root .reward-sparkle {
   position: absolute;
-  top: -10%;
-  right: -6%;
+  top: -8%;
+  right: -8%;
   font-size: 0.95rem;
   pointer-events: none;
   animation: loyalty-sparkle 1.4s ease-in-out infinite;
+  z-index: 2;
 }
 @keyframes loyalty-sparkle {
   0%, 100% { opacity: 0.5; transform: scale(0.9) rotate(-8deg); }
