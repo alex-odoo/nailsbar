@@ -31,6 +31,7 @@ model Staff {
   schedule              Schedule[]
   appointments          Appointment[]
   pushSubs              PushSubscription[]
+  loyaltyStamps         LoyaltyStamp[]
   createdAt             DateTime      @default(now())
   updatedAt             DateTime      @updatedAt
 }
@@ -65,38 +66,59 @@ model Schedule {
 }
 
 model Client {
-  id             String        @id @default(cuid())
-  firstName      String
-  lastName       String?
-  phone          String        @unique
-  notes          String?
-  telegramChatId String?
-  appointments   Appointment[]
-  createdAt      DateTime      @default(now())
-  updatedAt      DateTime      @updatedAt
+  id                    String         @id @default(cuid())
+  firstName             String
+  lastName              String?
+  phone                 String         @unique
+  notes                 String?
+  telegramChatId        String?
+  loyaltyCyclesRedeemed Int            @default(0)
+  appointments          Appointment[]
+  loyaltyStamps         LoyaltyStamp[]
+  createdAt             DateTime       @default(now())
+  updatedAt             DateTime       @updatedAt
 
   @@index([phone])
 }
 
 model Appointment {
-  id        String      @id @default(cuid())
-  clientId  String
-  client    Client      @relation(fields: [clientId], references: [id])
-  staffId   String
-  staff     Staff       @relation(fields: [staffId], references: [id])
-  serviceId String
-  service   Service     @relation(fields: [serviceId], references: [id])
-  date      DateTime
-  startTime String
-  endTime   String
-  status    String      @default("PENDING")
-  notes     String?
-  reminders Reminder[]
-  createdAt DateTime    @default(now())
-  updatedAt DateTime    @updatedAt
+  id            String         @id @default(cuid())
+  clientId      String
+  client        Client         @relation(fields: [clientId], references: [id])
+  staffId       String
+  staff         Staff          @relation(fields: [staffId], references: [id])
+  serviceId     String
+  service       Service        @relation(fields: [serviceId], references: [id])
+  date          DateTime
+  startTime     String
+  endTime       String
+  status        String         @default("PENDING")
+  notes         String?
+  reminders     Reminder[]
+  loyaltyStamps LoyaltyStamp[]
+  createdAt     DateTime       @default(now())
+  updatedAt     DateTime       @updatedAt
 
   @@index([date, staffId])
   @@index([clientId])
+}
+
+// LoyaltyStamp: one stamp earned by a client. cycleNumber lets us scope
+// the active card and keep history after redeem. appointmentId is unique
+// so the auto-stamp on appointment.status=DONE is idempotent.
+model LoyaltyStamp {
+  id            String       @id @default(cuid())
+  clientId      String
+  client        Client       @relation(fields: [clientId], references: [id])
+  cycleNumber   Int
+  source        String       // 'manual' | 'auto_appointment'
+  staffId       String?      // who awarded it (manual or DONE-transition)
+  staff         Staff?       @relation(fields: [staffId], references: [id])
+  appointmentId String?      @unique
+  appointment   Appointment? @relation(fields: [appointmentId], references: [id])
+  createdAt     DateTime     @default(now())
+
+  @@index([clientId, cycleNumber])
 }
 
 model Reminder {

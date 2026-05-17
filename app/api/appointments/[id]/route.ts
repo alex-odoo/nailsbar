@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { prisma } from '@/lib/prisma'
 import { requireAuth } from '@/lib/auth'
+import { awardStamp } from '@/lib/loyalty'
 
 // PATCH /api/appointments/:id — змінити статус
 export async function PATCH(req: NextRequest, { params }: { params: Promise<{ id: string }> }) {
@@ -33,6 +34,21 @@ export async function PATCH(req: NextRequest, { params }: { params: Promise<{ id
         ...(notes !== undefined && { notes }),
       },
     })
+
+    // Loyalty: award one stamp on the first transition into DONE.
+    // appointmentId is @unique on LoyaltyStamp, so the helper is safe to retry.
+    if (status === 'DONE' && appointment.status !== 'DONE') {
+      try {
+        await awardStamp({
+          clientId: updated.clientId,
+          staffId: session.id,
+          source: 'auto_appointment',
+          appointmentId: updated.id,
+        })
+      } catch (e) {
+        console.error('loyalty auto-stamp failed', e)
+      }
+    }
 
     return NextResponse.json(updated)
   } catch {
