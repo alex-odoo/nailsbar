@@ -326,7 +326,10 @@ export default function LoyaltyPage() {
                       />
                     </svg>
                     {isReward ? (
-                      <div className="reward-lbl">−50%</div>
+                      <>
+                        <div className="reward-lbl">−50%</div>
+                        {stamped && <div className="reward-sparkle">✨</div>}
+                      </>
                     ) : (
                       <div className="stamp-ico">💅</div>
                     )}

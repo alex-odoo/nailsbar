@@ -506,6 +506,45 @@
 }
 .loyalty-root .hslot.popping svg { animation: loyalty-heartPop 0.38s ease; }
 
+/* Reward heart when filled: override the muted reward-slot color with
+   the hot-pink fill, add a continuous gold shimmer + brightness pulse
+   to signal that the −50% is now active. */
+.loyalty-root .hslot.reward-slot.on .hfill {
+  fill: var(--pink-hot);
+}
+.loyalty-root .hslot.reward-slot.on svg {
+  animation: loyalty-rewardShimmer 1.8s ease-in-out infinite;
+}
+@keyframes loyalty-rewardShimmer {
+  0%, 100% {
+    filter: drop-shadow(0 2px 4px rgba(0, 0, 0, 0.3))
+            drop-shadow(0 0 4px rgba(255, 215, 0, 0.4))
+            brightness(1);
+  }
+  50% {
+    filter: drop-shadow(0 2px 4px rgba(0, 0, 0, 0.3))
+            drop-shadow(0 0 14px rgba(255, 215, 0, 0.85))
+            brightness(1.18);
+  }
+}
+.loyalty-root .hslot.reward-slot.on .reward-lbl {
+  color: #fff;
+  font-size: 0.88rem;
+  text-shadow: 0 1px 2px rgba(0, 0, 0, 0.35);
+}
+.loyalty-root .hslot.reward-sparkle {
+  position: absolute;
+  top: -10%;
+  right: -6%;
+  font-size: 0.95rem;
+  pointer-events: none;
+  animation: loyalty-sparkle 1.4s ease-in-out infinite;
+}
+@keyframes loyalty-sparkle {
+  0%, 100% { opacity: 0.5; transform: scale(0.9) rotate(-8deg); }
+  50%      { opacity: 1;   transform: scale(1.15) rotate(8deg); }
+}
+
 /* Poster page (standalone QR for printing) */
 .loyalty-root .poster-page {
   display: flex;

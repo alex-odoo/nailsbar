@@ -186,6 +186,28 @@ function ClientProfile({
     } finally { setBusy(false) }
   }
 
+  async function deleteOne(stampId: string) {
+    if (!confirm('Видалити цей штамп?')) return
+    setBusy(true); setMsg('')
+    try {
+      const res = await fetch(`/api/loyalty/staff/stamp/${stampId}`, { method: 'DELETE' })
+      if (res.status === 403) { setMsg('Тільки адмін'); return }
+      if (!res.ok) { setMsg('Не вдалося видалити'); return }
+      const data = await res.json()
+      onLoyaltyChange({
+        cycleNumber: data.state.cycleNumber,
+        cyclesRedeemed: data.state.cyclesRedeemed,
+        stamps: data.state.stamps,
+        target: data.state.target,
+        canRedeem: data.state.canRedeem,
+        todayStamps: data.state.todayStamps ?? loyalty.todayStamps,
+        recentStamps: data.state.recentStamps ?? loyalty.recentStamps,
+      })
+      setMsg('Штамп видалено')
+      setTimeout(() => setMsg(''), 2500)
+    } finally { setBusy(false) }
+  }
+
   async function clearCycle() {
     if (!confirm(`Очистити поточний цикл штампів для ${client.name}?`)) return
     setBusy(true); setMsg('')
@@ -292,10 +314,20 @@ function ClientProfile({
             <p className="text-[11px] uppercase tracking-wide text-muted mb-1">Останні штампи</p>
             <div className="space-y-1">
               {loyalty.recentStamps.slice(0, 6).map(s => (
-                <div key={s.id} className="text-xs text-navy flex justify-between">
+                <div key={s.id} className="text-xs text-navy flex justify-between items-center">
                   <span>💅 {formatStampDate(s.createdAt)}</span>
-                  <span className="text-muted">
-                    {s.staffName ?? '—'}{s.source === 'auto_appointment' && ' · авто'}
+                  <span className="flex items-center gap-2 text-muted">
+                    <span>{s.staffName ?? '—'}{s.source === 'auto_appointment' && ' · авто'}</span>
+                    {isAdmin && (
+                      <button
+                        onClick={() => deleteOne(s.id)}
+                        disabled={busy}
+                        aria-label="Видалити штамп"
+                        className="w-5 h-5 flex items-center justify-center rounded-full text-error border border-error/25 hover:bg-error/10 disabled:opacity-40 text-xs"
+                      >
+                        ×
+                      </button>
+                    )}
                   </span>
                 </div>
               ))}

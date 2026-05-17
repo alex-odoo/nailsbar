@@ -145,6 +145,21 @@ export default function LoyaltyStaffView({ isAdmin }: { isAdmin: boolean }) {
     }
   }, [state])
 
+  const deleteStamp = useCallback(async (stampId: string) => {
+    if (!state) return
+    if (!window.confirm('Видалити цей штамп?')) return
+    setBusy(true); setError(''); setInfo('')
+    try {
+      const res = await fetch(`/api/loyalty/staff/stamp/${stampId}`, { method: 'DELETE' })
+      if (res.status === 403) { setError('Тільки адмін може видалити штамп'); return }
+      if (!res.ok) { setError('Не вдалося видалити'); return }
+      const data = (await res.json()) as { state: LoyaltyState; removed: number }
+      setState(data.state)
+      setInfo('Штамп видалено')
+      setTimeout(() => setInfo(''), 2500)
+    } finally { setBusy(false) }
+  }, [state])
+
   const clearCycle = useCallback(async () => {
     if (!state) return
     const ok = window.confirm(
@@ -300,9 +315,21 @@ export default function LoyaltyStaffView({ isAdmin }: { isAdmin: boolean }) {
                     className="bg-surface border border-cream-dark rounded-lg px-3 py-2 flex justify-between items-center text-sm"
                   >
                     <span className="text-navy">💅 {formatStampDate(s.createdAt)}</span>
-                    <span className="text-xs text-muted">
-                      {s.staffName ?? '—'}
-                      {s.source === 'auto_appointment' && ' · авто'}
+                    <span className="flex items-center gap-2 text-xs text-muted">
+                      <span>
+                        {s.staffName ?? '—'}
+                        {s.source === 'auto_appointment' && ' · авто'}
+                      </span>
+                      {isAdmin && (
+                        <button
+                          onClick={() => deleteStamp(s.id)}
+                          disabled={busy}
+                          aria-label="Видалити штамп"
+                          className="w-6 h-6 flex items-center justify-center rounded-full text-error border border-error/25 hover:bg-error/5 disabled:opacity-40"
+                        >
+                          ×
+                        </button>
+                      )}
                     </span>
                   </div>
                 ))}
