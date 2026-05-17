@@ -4,7 +4,7 @@ import { useCallback, useEffect, useState } from 'react'
 import Image from 'next/image'
 import { QRCodeSVG } from 'qrcode.react'
 
-const TOTAL = 9
+const TOTAL = 10
 const PIN_LENGTH = 6
 const STORAGE_KEY = 'nailsbar.loyalty.clientId'
 
@@ -175,11 +175,11 @@ export default function LoyaltyPage() {
     closePin()
 
     if (pinMode === 'stamp') {
-      const newIndex = fresh.stamps
       setState(fresh)
-      // pop animation on the freshly-filled slot
-      if (newIndex >= 1 && newIndex <= TOTAL) {
-        setPopping(newIndex)
+      // pop animation on the freshly-filled slot (stamps 1..10 → slots 0..9)
+      const slotIndex = fresh.stamps - 1
+      if (slotIndex >= 0 && slotIndex < TOTAL) {
+        setPopping(slotIndex)
         setTimeout(() => setPopping(null), 450)
       }
       if (fresh.canRedeem) {
@@ -222,8 +222,8 @@ export default function LoyaltyPage() {
           <h2>Картка лояльності</h2>
           <p>
             {needName
-              ? <>Перша картка? Додайте ім&apos;я і ми створимо її. Збирайте 9 процедур - наступна з <strong>−50%</strong></>
-              : <>Введіть номер телефону щоб відкрити вашу картку. Збирайте 9 процедур - наступна з <strong>−50%</strong></>}
+              ? <>Перша картка? Додайте ім&apos;я і ми створимо її. Збирайте 10 штампів - знижка <strong>−50%</strong></>
+              : <>Введіть номер телефону щоб відкрити вашу картку. Збирайте 10 штампів - знижка <strong>−50%</strong></>}
           </p>
           <input
             className={`input ${formError ? 'error' : ''}`}
@@ -285,26 +285,21 @@ export default function LoyaltyPage() {
 
           <div className="loyalty-card">
             <div className="card-title">Loyalty Card</div>
-            <div className="card-sub">Знижка −50% на 10-ту процедуру</div>
+            <div className="card-sub">Збери 10 штампів - знижка −50%</div>
             {state.cyclesRedeemed > 0 && (
               <div className="cycle-badge">Цикл №{state.cycleNumber} · нагород: {state.cyclesRedeemed}</div>
             )}
             <div className="grid">
-              {Array.from({ length: 10 }).map((_, i) => {
+              {Array.from({ length: TOTAL }).map((_, i) => {
+                // Every slot is a stamp. Slot 0 carries the NAILS BAR
+                // decoration but counts as stamp #1; client fills it on
+                // their first visit, then slots 1..9 on each subsequent.
                 const isLogo = i === 0
-                const isReward = i === 9
-                const stamped = !isLogo && !isReward && i <= state.stamps
-                const rewardOn = isReward && state.canRedeem
+                const stamped = i < state.stamps
                 const isPopping = popping !== null && i === popping
-                // Logo slot stays unfilled until the client has earned at
-                // least one stamp; this matches the "empty card on first
-                // visit" expectation. After the first stamp it lights up
-                // along with the rest, since stamps render starting at i=1.
-                const logoOn = isLogo && state.stamps > 0
                 const classes = [
                   'hslot',
-                  logoOn || stamped || rewardOn ? 'on' : '',
-                  isReward ? 'reward-slot' : '',
+                  stamped ? 'on' : '',
                   isPopping ? 'popping' : '',
                 ].filter(Boolean).join(' ')
                 return (
@@ -315,14 +310,14 @@ export default function LoyaltyPage() {
                         d="M50 85C50 85 5 52 5 28C5 14 16 5 28 5C37 5 45 11 50 18C55 11 63 5 72 5C84 5 95 14 95 28C95 52 50 85 50 85Z"
                       />
                     </svg>
-                    {isLogo && (
+                    {isLogo ? (
                       <div className="logo-inside">
                         <span>NAILS</span>
                         <span>BAR</span>
                       </div>
+                    ) : (
+                      <div className="stamp-ico">💅</div>
                     )}
-                    {isReward && <div className="reward-lbl">−50%</div>}
-                    {!isLogo && !isReward && <div className="stamp-ico">💅</div>}
                   </div>
                 )
               })}
@@ -389,7 +384,7 @@ export default function LoyaltyPage() {
         <div className="celeb-ico">🎉💅✨</div>
         <div className="celeb-h">Вітаємо!</div>
         <div className="celeb-p">
-          Ви зібрали 9 процедур<br />
+          Ви зібрали 10 штампів<br />
           і отримуєте <strong style={{ color: 'var(--pink-hot)', fontSize: '1.15em' }}>−50%</strong><br />
           на наступний візит!
         </div>

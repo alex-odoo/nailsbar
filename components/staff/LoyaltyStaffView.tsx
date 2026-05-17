@@ -18,7 +18,7 @@ type StampResult = {
   reason: 'cycle_full' | 'duplicate' | null
 }
 
-const TOTAL = 9
+const TOTAL = 10
 
 export default function LoyaltyStaffView() {
   const [phone, setPhone] = useState('')

@@ -1,7 +1,7 @@
 import * as bcrypt from 'bcryptjs'
 import { prisma } from './prisma'
 
-export const CARD_SIZE = 9 // stamps needed to redeem -50%
+export const CARD_SIZE = 10 // stamps needed to redeem -50%
 
 export type LoyaltyState = {
   clientId: string
