@@ -7,6 +7,7 @@ type StampRecord = {
   createdAt: string
   source: string
   staffName: string | null
+  cycleNumber: number
 }
 
 type LoyaltyState = {
@@ -50,6 +51,7 @@ export default function LoyaltyStaffView({ isAdmin }: { isAdmin: boolean }) {
   const [creating, setCreating] = useState(false)
   const [firstName, setFirstName] = useState('')
   const [busy, setBusy] = useState(false)
+  const [showPast, setShowPast] = useState(false)
 
   const reset = useCallback(() => {
     setPhone('')
@@ -305,37 +307,75 @@ export default function LoyaltyStaffView({ isAdmin }: { isAdmin: boolean }) {
             )}
           </div>
 
-          {state.recentStamps && state.recentStamps.length > 0 && (
-            <div className="mb-4">
-              <p className="text-xs uppercase tracking-wide text-muted mb-2">Останні штампи</p>
-              <div className="space-y-1.5">
-                {state.recentStamps.slice(0, 8).map((s) => (
-                  <div
-                    key={s.id}
-                    className="bg-surface border border-cream-dark rounded-lg px-3 py-2 flex justify-between items-center text-sm"
-                  >
-                    <span className="text-navy">💅 {formatStampDate(s.createdAt)}</span>
-                    <span className="flex items-center gap-2 text-xs text-muted">
-                      <span>
-                        {s.staffName ?? '—'}
-                        {s.source === 'auto_appointment' && ' · авто'}
-                      </span>
-                      {isAdmin && (
-                        <button
-                          onClick={() => deleteStamp(s.id)}
-                          disabled={busy}
-                          aria-label="Видалити штамп"
-                          className="w-6 h-6 flex items-center justify-center rounded-full text-error border border-error/25 hover:bg-error/5 disabled:opacity-40"
+          {state.recentStamps && state.recentStamps.length > 0 && (() => {
+            const current = state.recentStamps!.filter(s => s.cycleNumber === state.cycleNumber)
+            const past = state.recentStamps!.filter(s => s.cycleNumber < state.cycleNumber)
+            return (
+              <div className="mb-4">
+                {current.length > 0 && (
+                  <>
+                    <p className="text-xs uppercase tracking-wide text-muted mb-2">
+                      Штампи поточного циклу
+                    </p>
+                    <div className="space-y-1.5 mb-3">
+                      {current.map((s) => (
+                        <div
+                          key={s.id}
+                          className="bg-surface border border-cream-dark rounded-lg px-3 py-2 flex justify-between items-center text-sm"
                         >
-                          ×
-                        </button>
-                      )}
-                    </span>
+                          <span className="text-navy">💅 {formatStampDate(s.createdAt)}</span>
+                          <span className="flex items-center gap-2 text-xs text-muted">
+                            <span>
+                              {s.staffName ?? '—'}
+                              {s.source === 'auto_appointment' && ' · авто'}
+                            </span>
+                            {isAdmin && (
+                              <button
+                                onClick={() => deleteStamp(s.id)}
+                                disabled={busy}
+                                aria-label="Видалити штамп"
+                                className="w-6 h-6 flex items-center justify-center rounded-full text-error border border-error/25 hover:bg-error/5 disabled:opacity-40"
+                              >
+                                ×
+                              </button>
+                            )}
+                          </span>
+                        </div>
+                      ))}
+                    </div>
+                  </>
+                )}
+
+                {past.length > 0 && (
+                  <div>
+                    <button
+                      onClick={() => setShowPast(v => !v)}
+                      className="text-xs uppercase tracking-wide text-muted hover:text-navy flex items-center gap-1"
+                    >
+                      <span>{showPast ? '▾' : '▸'}</span>
+                      Минулі цикли · {past.length} штамп(ів)
+                    </button>
+                    {showPast && (
+                      <div className="space-y-1 mt-2">
+                        {past.map((s) => (
+                          <div
+                            key={s.id}
+                            className="px-3 py-1.5 flex justify-between items-center text-xs text-muted"
+                          >
+                            <span>💅 {formatStampDate(s.createdAt)} · цикл №{s.cycleNumber}</span>
+                            <span>
+                              {s.staffName ?? '—'}
+                              {s.source === 'auto_appointment' && ' · авто'}
+                            </span>
+                          </div>
+                        ))}
+                      </div>
+                    )}
                   </div>
-                ))}
+                )}
               </div>
-            </div>
-          )}
+            )
+          })()}
 
           {info && <p className="text-sm font-semibold text-navy mb-3">{info}</p>}
           {error && <p className="text-sm text-error mb-3">{error}</p>}

@@ -7,6 +7,7 @@ type StampRecord = {
   createdAt: string
   source: string
   staffName: string | null
+  cycleNumber: number
 }
 
 type Loyalty = {
@@ -160,6 +161,7 @@ function ClientProfile({
 }) {
   const [busy, setBusy] = useState(false)
   const [msg, setMsg] = useState('')
+  const [showPast, setShowPast] = useState(false)
   const loyalty = client.loyalty
 
   async function addStamp() {
@@ -309,31 +311,62 @@ function ClientProfile({
           </p>
         )}
 
-        {loyalty.recentStamps.length > 0 && (
-          <div className="mt-3">
-            <p className="text-[11px] uppercase tracking-wide text-muted mb-1">Останні штампи</p>
-            <div className="space-y-1">
-              {loyalty.recentStamps.slice(0, 6).map(s => (
-                <div key={s.id} className="text-xs text-navy flex justify-between items-center">
-                  <span>💅 {formatStampDate(s.createdAt)}</span>
-                  <span className="flex items-center gap-2 text-muted">
-                    <span>{s.staffName ?? '—'}{s.source === 'auto_appointment' && ' · авто'}</span>
-                    {isAdmin && (
-                      <button
-                        onClick={() => deleteOne(s.id)}
-                        disabled={busy}
-                        aria-label="Видалити штамп"
-                        className="w-5 h-5 flex items-center justify-center rounded-full text-error border border-error/25 hover:bg-error/10 disabled:opacity-40 text-xs"
-                      >
-                        ×
-                      </button>
-                    )}
-                  </span>
+        {loyalty.recentStamps.length > 0 && (() => {
+          const current = loyalty.recentStamps.filter(s => s.cycleNumber === loyalty.cycleNumber)
+          const past = loyalty.recentStamps.filter(s => s.cycleNumber < loyalty.cycleNumber)
+          return (
+            <div className="mt-3">
+              {current.length > 0 && (
+                <>
+                  <p className="text-[11px] uppercase tracking-wide text-muted mb-1">
+                    Штампи поточного циклу
+                  </p>
+                  <div className="space-y-1 mb-2">
+                    {current.map(s => (
+                      <div key={s.id} className="text-xs text-navy flex justify-between items-center">
+                        <span>💅 {formatStampDate(s.createdAt)}</span>
+                        <span className="flex items-center gap-2 text-muted">
+                          <span>{s.staffName ?? '—'}{s.source === 'auto_appointment' && ' · авто'}</span>
+                          {isAdmin && (
+                            <button
+                              onClick={() => deleteOne(s.id)}
+                              disabled={busy}
+                              aria-label="Видалити штамп"
+                              className="w-5 h-5 flex items-center justify-center rounded-full text-error border border-error/25 hover:bg-error/10 disabled:opacity-40 text-xs"
+                            >
+                              ×
+                            </button>
+                          )}
+                        </span>
+                      </div>
+                    ))}
+                  </div>
+                </>
+              )}
+              {past.length > 0 && (
+                <div>
+                  <button
+                    onClick={() => setShowPast(v => !v)}
+                    className="text-[11px] uppercase tracking-wide text-muted hover:text-navy flex items-center gap-1"
+                  >
+                    <span>{showPast ? '▾' : '▸'}</span>
+                    Минулі цикли · {past.length} штамп(ів)
+                  </button>
+                  {showPast && (
+                    <div className="space-y-0.5 mt-1">
+                      {past.map(s => (
+                        <div key={s.id} className="text-[11px] text-muted flex justify-between">
+                          <span>💅 {formatStampDate(s.createdAt)} · цикл №{s.cycleNumber}</span>
+                          <span>{s.staffName ?? '—'}{s.source === 'auto_appointment' && ' · авто'}</span>
+                        </div>
+                      ))}
+                    </div>
+                  )}
                 </div>
-              ))}
+              )}
             </div>
-          </div>
-        )}
+          )
+        })()}
 
         {msg && <p className="text-xs font-medium text-navy mt-3">{msg}</p>}
 

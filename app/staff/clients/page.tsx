@@ -59,6 +59,7 @@ export default async function ClientsPage() {
           id: s.id,
           createdAt: s.createdAt.toISOString(),
           source: s.source,
+          cycleNumber: s.cycleNumber,
           staffName: s.staff?.name ?? null,
         })),
       },

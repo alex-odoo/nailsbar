@@ -20,10 +20,24 @@ export async function DELETE(
 
     const stamp = await prisma.loyaltyStamp.findUnique({
       where: { id: stampId },
-      select: { id: true, clientId: true },
+      select: {
+        id: true,
+        clientId: true,
+        cycleNumber: true,
+        client: { select: { loyaltyCyclesRedeemed: true } },
+      },
     })
     if (!stamp) {
       return NextResponse.json({ error: 'Stamp not found' }, { status: 404 })
+    }
+
+    // Past, already-redeemed cycles are statistics: refuse to delete them.
+    const currentCycle = stamp.client.loyaltyCyclesRedeemed + 1
+    if (stamp.cycleNumber < currentCycle) {
+      return NextResponse.json(
+        { error: 'Cannot delete stamps from past cycles (statistics)' },
+        { status: 400 },
+      )
     }
 
     await prisma.loyaltyStamp.delete({ where: { id: stampId } })

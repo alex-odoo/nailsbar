@@ -8,6 +8,7 @@ export type StampRecord = {
   createdAt: Date
   source: string
   staffName: string | null
+  cycleNumber: number
 }
 
 export type LoyaltyState = {
@@ -71,6 +72,7 @@ export async function getLoyaltyState(
         id: true,
         createdAt: true,
         source: true,
+        cycleNumber: true,
         staff: { select: { name: true } },
       },
     }),
@@ -83,6 +85,7 @@ export async function getLoyaltyState(
       id: s.id,
       createdAt: s.createdAt,
       source: s.source,
+      cycleNumber: s.cycleNumber,
       staffName: s.staff?.name ?? null,
     })),
   }
