@@ -38,22 +38,13 @@
 /* WELCOME logo (replaces .brand/.brand-sub text on welcome+loading screens).
    Asset is the burgundy logo (NAILSBAR + Odesa) cropped tight and repainted
    with the page bg so it bleeds in without a visible square edge.
-   EST. 2021 sits below as HTML text so we can size and space it freely. */
+   Tight margin to the welcome box below — no spacer text in between. */
 .loyalty-root .welcome-logo {
   width: 92%;
   max-width: 360px;
   height: auto;
   display: block;
-  margin: 0 auto;
-}
-.loyalty-root .est-line {
-  font-size: 1.45rem;
-  font-weight: 700;
-  letter-spacing: 0.28em;
-  color: var(--cream);
-  text-align: center;
-  margin: 6px 0 18px;
-  padding-left: 0.28em; /* compensate for last-letter spacing on visual center */
+  margin: 0 auto 14px;
 }
 
 /* WELCOME */

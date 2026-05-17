@@ -218,7 +218,6 @@ export default function LoyaltyPage() {
           priority
           className="welcome-logo"
         />
-        <div className="est-line">EST. 2021</div>
         <div className="welcome-box">
           <h2>Картка лояльності</h2>
           <p>
