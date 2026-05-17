@@ -7,6 +7,7 @@ const navItems = [
   { href: '/staff/dashboard', label: 'Сьогодні', icon: '📋' },
   { href: '/staff/week',      label: 'Тиждень',  icon: '📅' },
   { href: '/staff/clients',   label: 'Клієнти',  icon: '👥' },
+  { href: '/staff/loyalty',   label: 'Картки',   icon: '💅' },
   { href: '/staff/settings',  label: 'Налаш.',   icon: '⚙️', adminOnly: true },
 ]
 

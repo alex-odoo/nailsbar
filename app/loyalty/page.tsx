@@ -22,7 +22,8 @@ type Screen = 'welcome' | 'card' | 'loading'
 export default function LoyaltyPage() {
   const [screen, setScreen] = useState<Screen>('loading')
   const [form, setForm] = useState({ firstName: '', phone: '' })
-  const [formError, setFormError] = useState(false)
+  const [needName, setNeedName] = useState(false) // phone not found, ask name
+  const [formError, setFormError] = useState<string | null>(null)
   const [submitting, setSubmitting] = useState(false)
   const [state, setState] = useState<LoyaltyState | null>(null)
 
@@ -67,23 +68,41 @@ export default function LoyaltyPage() {
   }, [])
 
   const openCard = useCallback(async () => {
-    const firstName = form.firstName.trim()
     const phone = form.phone.trim()
-    if (!firstName || !phone) {
-      setFormError(true)
-      setTimeout(() => setFormError(false), 1500)
+    const firstName = form.firstName.trim()
+    if (!phone) {
+      setFormError('Введіть номер телефону')
+      setTimeout(() => setFormError(null), 1800)
+      return
+    }
+    if (needName && !firstName) {
+      setFormError("Введіть ім'я для нової картки")
+      setTimeout(() => setFormError(null), 1800)
       return
     }
     setSubmitting(true)
+    setFormError(null)
     try {
+      const body = needName ? { firstName, phone } : { phone }
       const res = await fetch('/api/loyalty/lookup', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ firstName, phone }),
+        body: JSON.stringify(body),
       })
+
+      if (res.status === 404) {
+        const data = await res.json().catch(() => ({}))
+        if (data?.error === 'not_found') {
+          // Phone not in DB: ask for a name and resubmit as create.
+          setNeedName(true)
+          setFormError("Картку не знайдено - введіть ім'я для нової")
+          setTimeout(() => setFormError(null), 2400)
+          return
+        }
+      }
       if (!res.ok) {
-        setFormError(true)
-        setTimeout(() => setFormError(false), 1500)
+        setFormError('Помилка, спробуйте ще раз')
+        setTimeout(() => setFormError(null), 1800)
         return
       }
       const s = (await res.json()) as LoyaltyState
@@ -93,11 +112,13 @@ export default function LoyaltyPage() {
     } finally {
       setSubmitting(false)
     }
-  }, [form.firstName, form.phone])
+  }, [form.firstName, form.phone, needName])
 
   const goBack = useCallback(() => {
     setState(null)
     setForm({ firstName: '', phone: '' })
+    setNeedName(false)
+    setFormError(null)
     localStorage.removeItem(STORAGE_KEY)
     setScreen('welcome')
     // Drop ?c=... from URL so reload doesn't auto-load the old client
@@ -193,19 +214,10 @@ export default function LoyaltyPage() {
         <div className="welcome-box">
           <h2>Картка лояльності</h2>
           <p>
-            Введіть ім&apos;я та телефон щоб відкрити свою картку. Збирайте 9 процедур
-            і наступна з <strong>−50%</strong>
+            {needName
+              ? <>Перша картка? Додайте ім&apos;я і ми створимо її. Збирайте 9 процедур - наступна з <strong>−50%</strong></>
+              : <>Введіть номер телефону щоб відкрити вашу картку. Збирайте 9 процедур - наступна з <strong>−50%</strong></>}
           </p>
-          <input
-            className={`input ${formError ? 'error' : ''}`}
-            type="text"
-            placeholder="Ваше ім'я"
-            maxLength={30}
-            autoComplete="given-name"
-            value={form.firstName}
-            onChange={(e) => setForm({ ...form, firstName: e.target.value })}
-            onKeyDown={(e) => { if (e.key === 'Enter') openCard() }}
-          />
           <input
             className={`input ${formError ? 'error' : ''}`}
             type="tel"
@@ -217,8 +229,30 @@ export default function LoyaltyPage() {
             onChange={(e) => setForm({ ...form, phone: e.target.value })}
             onKeyDown={(e) => { if (e.key === 'Enter') openCard() }}
           />
+          {needName && (
+            <input
+              className={`input ${formError ? 'error' : ''}`}
+              type="text"
+              placeholder="Ваше ім'я"
+              maxLength={30}
+              autoComplete="given-name"
+              autoFocus
+              value={form.firstName}
+              onChange={(e) => setForm({ ...form, firstName: e.target.value })}
+              onKeyDown={(e) => { if (e.key === 'Enter') openCard() }}
+            />
+          )}
+          {formError && (
+            <div style={{ color: '#ff8fab', fontSize: '0.78rem', marginBottom: 10, textAlign: 'center' }}>
+              {formError}
+            </div>
+          )}
           <button className="btn-main" onClick={openCard} disabled={submitting}>
-            {submitting ? 'Завантаження...' : 'Відкрити картку →'}
+            {submitting
+              ? 'Завантаження...'
+              : needName
+                ? 'Створити картку →'
+                : 'Відкрити картку →'}
           </button>
         </div>
       </div>

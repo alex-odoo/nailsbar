@@ -3,8 +3,11 @@ import { prisma } from '@/lib/prisma'
 import { getLoyaltyState, normalizePhone } from '@/lib/loyalty'
 
 // POST /api/loyalty/lookup
-// Body either: { clientId } - load existing client by id
-//   or:       { firstName, phone } - upsert by phone, return loyalty state
+// Body modes:
+//   { clientId }            - fetch by id (returns 404 if missing)
+//   { phone }               - find by phone only (returns 404 with not_found
+//                             so the UI can ask for a name to create one)
+//   { firstName, phone }    - upsert by phone (creates a card if missing)
 export async function POST(req: NextRequest) {
   try {
     const body = await req.json().catch(() => ({}))
@@ -15,20 +18,35 @@ export async function POST(req: NextRequest) {
       return NextResponse.json(state)
     }
 
-    const firstName = typeof body.firstName === 'string' ? body.firstName.trim() : ''
     const phoneRaw = typeof body.phone === 'string' ? body.phone.trim() : ''
-    if (!firstName || !phoneRaw) {
-      return NextResponse.json({ error: 'firstName and phone required' }, { status: 400 })
+    if (!phoneRaw) {
+      return NextResponse.json({ error: 'phone required' }, { status: 400 })
     }
     const phone = normalizePhone(phoneRaw)
     if (!/^\+?\d{10,15}$/.test(phone)) {
       return NextResponse.json({ error: 'Invalid phone' }, { status: 400 })
     }
 
+    const firstNameRaw = typeof body.firstName === 'string' ? body.firstName.trim() : ''
+
+    if (!firstNameRaw) {
+      // Phone-only lookup: do not create the client, signal missing so the
+      // UI can fall back to a name prompt.
+      const existing = await prisma.client.findUnique({
+        where: { phone },
+        select: { id: true },
+      })
+      if (!existing) {
+        return NextResponse.json({ error: 'not_found' }, { status: 404 })
+      }
+      const state = await getLoyaltyState(existing.id)
+      return NextResponse.json(state)
+    }
+
     const client = await prisma.client.upsert({
       where: { phone },
-      update: { firstName },
-      create: { firstName, phone },
+      update: { firstName: firstNameRaw },
+      create: { firstName: firstNameRaw, phone },
       select: { id: true },
     })
     const state = await getLoyaltyState(client.id)
