@@ -291,10 +291,8 @@ export default function LoyaltyPage() {
             )}
             <div className="grid">
               {Array.from({ length: TOTAL }).map((_, i) => {
-                // Every slot is a stamp. Slot 0 carries the NAILS BAR
-                // decoration but counts as stamp #1; client fills it on
-                // their first visit, then slots 1..9 on each subsequent.
-                const isLogo = i === 0
+                // Every slot is a stamp, identical in appearance. Empty
+                // until earned, hot pink with 💅 once filled.
                 const stamped = i < state.stamps
                 const isPopping = popping !== null && i === popping
                 const classes = [
@@ -310,14 +308,7 @@ export default function LoyaltyPage() {
                         d="M50 85C50 85 5 52 5 28C5 14 16 5 28 5C37 5 45 11 50 18C55 11 63 5 72 5C84 5 95 14 95 28C95 52 50 85 50 85Z"
                       />
                     </svg>
-                    {isLogo ? (
-                      <div className="logo-inside">
-                        <span>NAILS</span>
-                        <span>BAR</span>
-                      </div>
-                    ) : (
-                      <div className="stamp-ico">💅</div>
-                    )}
+                    <div className="stamp-ico">💅</div>
                   </div>
                 )
               })}
