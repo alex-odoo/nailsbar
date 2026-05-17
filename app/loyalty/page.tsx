@@ -296,9 +296,14 @@ export default function LoyaltyPage() {
                 const stamped = !isLogo && !isReward && i <= state.stamps
                 const rewardOn = isReward && state.canRedeem
                 const isPopping = popping !== null && i === popping
+                // Logo slot stays unfilled until the client has earned at
+                // least one stamp; this matches the "empty card on first
+                // visit" expectation. After the first stamp it lights up
+                // along with the rest, since stamps render starting at i=1.
+                const logoOn = isLogo && state.stamps > 0
                 const classes = [
                   'hslot',
-                  isLogo || stamped || rewardOn ? 'on' : '',
+                  logoOn || stamped || rewardOn ? 'on' : '',
                   isReward ? 'reward-slot' : '',
                   isPopping ? 'popping' : '',
                 ].filter(Boolean).join(' ')
