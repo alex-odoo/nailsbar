@@ -4,7 +4,10 @@
  */
 
 const BOT_TOKEN = process.env.TELEGRAM_BOT_TOKEN!
-const ADMIN_CHAT_ID = process.env.TELEGRAM_ADMIN_CHAT_ID!
+const ADMIN_CHAT_IDS = (process.env.TELEGRAM_ADMIN_CHAT_IDS ?? '')
+  .split(',')
+  .map((s) => s.trim())
+  .filter(Boolean)
 
 const API = `https://api.telegram.org/bot${BOT_TOKEN}`
 
@@ -14,6 +17,16 @@ async function sendMessage(chatId: string, text: string): Promise<void> {
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify({ chat_id: chatId, text, parse_mode: 'HTML' }),
   })
+}
+
+async function notifyAdmins(text: string): Promise<void> {
+  await Promise.all(
+    ADMIN_CHAT_IDS.map((id) =>
+      sendMessage(id, text).catch((e) =>
+        console.error(`notifyAdmins failed for ${id}`, e),
+      ),
+    ),
+  )
 }
 
 /** Нотифікація адміну про новий запис від клієнта */
@@ -35,7 +48,7 @@ export async function notifyNewAppointment(data: {
 ✂️ Майстер: ${data.masterName}
 `.trim()
 
-  await sendMessage(ADMIN_CHAT_ID, text)
+  await notifyAdmins(text)
 }
 
 /** Нагадування клієнту (відправляється коли є chatId клієнта) */
@@ -69,7 +82,7 @@ export async function notifyNewLoyaltyClient(data: {
   name: string
   phone: string
 }): Promise<void> {
-  if (!ADMIN_CHAT_ID) return
+  if (ADMIN_CHAT_IDS.length === 0) return
   const when = new Date().toLocaleString('uk-UA', {
     timeZone: 'Europe/Kyiv',
     day: 'numeric',
@@ -84,11 +97,7 @@ export async function notifyNewLoyaltyClient(data: {
 📱 ${data.phone}
 🕐 ${when}
 `.trim()
-  try {
-    await sendMessage(ADMIN_CHAT_ID, text)
-  } catch (e) {
-    console.error('notifyNewLoyaltyClient failed', e)
-  }
+  await notifyAdmins(text)
 }
 
 /** SMS-подібне підтвердження при бронюванні (якщо клієнт дав Telegram) */
