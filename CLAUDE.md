@@ -6,8 +6,8 @@
 
 - **Production**: https://nailsbar.store
 - **Repo**: github.com/alex-odoo/nailsbar | Local: `/Users/mac/nailsbar`
-- **Server**: soltis-prod 195.201.91.52 (shared with Soltis, port 3001)
-- **SSH**: `ssh -i ~/.ssh/rteam_hetzner root@195.201.91.52`
+- **Server**: alex-bots 46.225.100.124 (moved from soltis-prod 2026-09-13, port 3001, nginx + certbot on the box)
+- **SSH**: `ssh -i ~/.ssh/rteam_hetzner root@46.225.100.124`
 - **Stack**: Next.js 16 + TypeScript + Prisma 5 + SQLite + Tailwind v4
 - **DB**: SQLite in Docker volume `nailsbar_sqlite_data` → `/data/nailsbar.db`
 - **Bot**: @NailsbarTOP_bot, webhook `https://nailsbar.store/api/telegram/webhook`
@@ -19,8 +19,8 @@
 cd /Users/mac/nailsbar
 git add . && git commit -m "..." && git push origin main
 rsync -avz --delete --exclude='.git' --exclude='node_modules' --exclude='.env*' \
-  -e "ssh -i ~/.ssh/rteam_hetzner" ./ root@195.201.91.52:/opt/nailsbar/
-ssh -i ~/.ssh/rteam_hetzner root@195.201.91.52 \
+  -e "ssh -i ~/.ssh/rteam_hetzner" ./ root@46.225.100.124:/opt/nailsbar/
+ssh -i ~/.ssh/rteam_hetzner root@46.225.100.124 \
   "cd /opt/nailsbar && docker compose build --no-cache && docker compose up -d"
 ```
 
@@ -31,7 +31,7 @@ ssh -i ~/.ssh/rteam_hetzner root@195.201.91.52 \
 3. **Prisma binary targets**: `["native", "linux-musl-openssl-3.0.x"]`
 4. **seed.ts** compiled via esbuild → `prisma/seed.js`
 5. **SQLite in Docker volume** — `docker compose down -v` WILL DESTROY DATA
-6. **Shares soltis-prod** with Soltis.ua — don't break nginx
+6. **Shares alex-bots** with Adam / crm-followup crons (no other web stack); the old copy on soltis-prod is stopped, remove after 2026-09-20 (container, volume `nailsbar_sqlite_data`, vhost bridge)
 
 ## Structure
 
