@@ -3,7 +3,9 @@ services:
     build: .
     restart: unless-stopped
     ports:
-      - "3001:3000"
+      # Loopback only: nginx on the box proxies to it. A Docker-published port
+      # bypasses ufw, so 0.0.0.0 would rely on the Hetzner firewall alone.
+      - "127.0.0.1:3001:3000"
     environment:
       DATABASE_URL: file:/data/nailsbar.db
       SESSION_SECRET: ${SESSION_SECRET}
