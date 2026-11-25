@@ -1,4 +1,4 @@
-# NailsBar — PWA nail salon booking
+# NailsBar - PWA nail salon booking
 
 > Full context: `~/Documents/ClaudeMemory/Projects/NailsBar.md`
 
@@ -11,14 +11,14 @@
 - **Stack**: Next.js 16 + TypeScript + Prisma 5 + SQLite + Tailwind v4
 - **DB**: SQLite in Docker volume `nailsbar_sqlite_data` → `/data/nailsbar.db`
 - **Bot**: @NailsbarTOP_bot, webhook `https://nailsbar.store/api/telegram/webhook`
-- **Auth**: PIN-only (Admin: 858430, Master: 666666)
+- **Auth**: PIN-only (6 digits, bcrypt in `Staff.pinHash`). PINs are never written in this repo: it is public
 
 ## Deploy
 
 ```bash
 cd /Users/mac/nailsbar
 git add . && git commit -m "..." && git push origin main
-rsync -avz --delete --exclude='.git' --exclude='node_modules' --exclude='.env*' \
+rsync -avz --delete --exclude='.git' --exclude='node_modules' --exclude='.env*' --exclude-from=.gitignore \
   -e "ssh -i ~/.ssh/rteam_hetzner" ./ root@100.121.153.94:/opt/nailsbar/
 ssh -i ~/.ssh/rteam_hetzner root@100.121.153.94 \
   "cd /opt/nailsbar && docker compose build --no-cache && docker compose up -d"
@@ -26,18 +26,18 @@ ssh -i ~/.ssh/rteam_hetzner root@100.121.153.94 \
 
 ## Critical Gotchas
 
-1. **bcryptjs import**: `import * as bcrypt from 'bcryptjs'` (NOT default — esbuild bug)
+1. **bcryptjs import**: `import * as bcrypt from 'bcryptjs'` (NOT default - esbuild bug)
 2. **Base image**: `node:20-slim` (NOT alpine)
 3. **Prisma binary targets**: `["native", "linux-musl-openssl-3.0.x"]`
 4. **seed.ts** compiled via esbuild → `prisma/seed.js`
-5. **SQLite in Docker volume** — `docker compose down -v` WILL DESTROY DATA
+5. **SQLite in Docker volume** - `docker compose down -v` WILL DESTROY DATA
 6. **Shares alex-bots** with Adam / crm-followup crons (no other web stack); the old copy on soltis-prod is stopped, remove after 2026-09-20 (container, volume `nailsbar_sqlite_data`, vhost bridge)
 
 ## Structure
 
 ```
 app/
-  staff/    — Internal: dashboard, week view, clients, settings (PIN auth)
-  book/     — Public: multi-service booking wizard
-  api/      — REST: appointments, clients, slots, services, auth, telegram
+  staff/    - Internal: dashboard, week view, clients, settings (PIN auth)
+  book/     - Public: multi-service booking wizard
+  api/      - REST: appointments, clients, slots, services, auth, telegram
 ```
